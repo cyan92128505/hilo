@@ -1,20 +1,20 @@
 ## 專案體驗流程
 
 1. 註冊/登入
-   POST /auth/register
-   POST /auth/login
+   POST /api/v1/auth/register
+   POST /api/v1/auth/login
    → 回傳 JWT
 
 2. 搜尋使用者
-   GET /users/search?q=username
+   GET /api/v1/users/search?q=username
    → 回傳使用者列表
 
 3. 開啟聊天室
-   POST /rooms
+   POST /api/v1/rooms
    Body: {"participant_id": "user_b_id"}
 
 4. WebSocket 連線
-   GET /ws?token=jwt
+   GET /api/v1/ws?token=jwt
    → 建立 WebSocket 連線
 
 5. 發送/接收訊息
