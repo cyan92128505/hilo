@@ -1,0 +1,32 @@
+package errorCatcher
+
+import "errors"
+
+var (
+	ErrAuthenticate                                     = errors.New("[AUTHENTICATE FAILED]")
+	ErrPermissionDeny                                   = errors.New("[PERMISSION DENY]")
+	ErrJWTExecute                                       = errors.New("[JWT EXECUTE FAILED]")
+	ErrJWTInitialize                                    = errors.New("[JWT INITIALIZE FAILED]")
+	ErrDatabaseConnection                               = errors.New("[DATABASE CONNECTION FAILED]")
+	ErrDatabaseDisconnect                               = errors.New("[DATABASE DISCONNECT FAILED]")
+	ErrDatabaseStartSession                             = errors.New("[DATABASE START SESSION FAILED]")
+	ErrDatabaseFormat                                   = errors.New("[DATABASE FORMAT FAILED]")
+	ErrDatabaseVariable                                 = errors.New("[DATABASE VARIABLE FAILED]")
+	ErrDatabaseExecute                                  = errors.New("[DATABASE EXECUTE FAILED]")
+	ErrDatabaseExecuteNotNullViolation                  = errors.New("[DATABASE EXECUTE NOT NULL VIOLATION FAILED]")
+	ErrDatabaseExecuteForeignKeyViolation               = errors.New("[DATABASE EXECUTE FOREIGN KEY VIOLATION FAILED]")
+	ErrDatabaseExecuteUniqueViolation                   = errors.New("[DATABASE EXECUTE UNIQUE VIOLATION FAILED]")
+	ErrDatabaseExecuteCheckViolation                    = errors.New("[DATABASE EXECUTE CHECK VIOLATION FAILED]")
+	ErrDatabaseExecuteMultipleColumnUpdateMustSubSelect = errors.New("[DATABASE EXECUTE MULTIPLE COLUMN UPDATE MUST SUB SELECT FAILED]")
+	ErrDatabaseExecuteCursor                            = errors.New("[DATABASE EXECUTE CURSOR FAILED]")
+	ErrDatabaseMarshal                                  = errors.New("[DATABASE MARSHAL FAILED]")
+	ErrDatabaseRowNotFound                              = errors.New("[DATABASE ROW NOT FOUND]")
+	ErrExecute                                          = errors.New("[EXECUTE FAILED]")
+	ErrInvalidArguments                                 = errors.New("[INVALID ARGUMENTS]")
+	ErrValidate                                         = errors.New("[VALIDATE FAILED]")
+	ErrVariable                                         = errors.New("[VARIABLE TYPE FAILED]")
+	ErrGinBindingAndValidate                            = errors.New("[GIN BINDING AND VALIDATE FAILED]")
+	ErrGenerateAuthorizationToken                       = errors.New("[Generate Authorization Token FAILED]")
+	ErrJSONMarshal                                      = errors.New("[JSON MARSHAL FAILED]")
+	ErrJSONUnmarshal                                    = errors.New("[JSON UNMARSHAL FAILED]")
+)

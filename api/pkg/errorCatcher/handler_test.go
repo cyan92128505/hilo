@@ -2,6 +2,7 @@ package errorCatcher
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,244 +13,317 @@ import (
 	"go.uber.org/zap/zaptest/observer"
 )
 
-type ErrorHandlerMiddlewareSuite struct {
+type HandlerSuite struct {
 	suite.Suite
 	obLog  *observer.ObservedLogs
 	logger *zap.Logger
 }
 
-func (suite *ErrorHandlerMiddlewareSuite) SetupTest() {
+func (suite *HandlerSuite) SetupTest() {
 	observedZapCore, observedLogs := observer.New(zap.WarnLevel)
 	suite.logger = zap.New(observedZapCore)
 	suite.obLog = observedLogs
 }
 
-// Test ErrorHandlerMiddleware with ApiError - Auth Error
-func (suite *ErrorHandlerMiddlewareSuite) TestErrorHandlerMiddleware_ApiError_Auth() {
+func (suite *HandlerSuite) TestPanicErrorHandler_PanicNormalError_ShouldMatchExpected() {
+	func() {
+		defer PanicErrorHandler(suite.logger, "Mock test: ")
+		panic(errors.New("got error"))
+	}()
+
+	suite.Equal(1, suite.obLog.Len())
+	firstLog := suite.obLog.All()[0]
+	suite.Equal("Mock test: ", firstLog.Message)
+	suite.Equal("got error", firstLog.Context[0].Interface.(error).Error())
+}
+
+func (suite *HandlerSuite) TestPanicErrorHandler_PanicStringError_ShouldMatchExpected() {
+	func() {
+		defer PanicErrorHandler(suite.logger, "Mock test: ")
+		panic("got error")
+	}()
+
+	suite.Equal(1, suite.obLog.Len())
+	firstLog := suite.obLog.All()[0]
+	suite.Equal("Mock test: ", firstLog.Message)
+}
+
+func (suite *HandlerSuite) TestPanicErrorHandler_PanicNoErrorNoStringTypeError_ShouldMatchExpected() {
+	func() {
+		defer PanicErrorHandler(suite.logger, "Mock test: ")
+		panic(struct {
+			Title string
+		}{
+			Title: "got error",
+		})
+	}()
+
+	suite.Equal(1, suite.obLog.Len())
+	firstLog := suite.obLog.All()[0]
+	suite.Equal("Mock test: ", firstLog.Message)
+	suite.Equal("{Title:got error}", fmt.Sprintf("%+v", firstLog.Context[0].Interface))
+}
+
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrValidate_ShouldStatusCodeGetStatusBadRequest() {
 	gin.SetMode(gin.ReleaseMode)
 	route := gin.New()
-	route.Use(ErrorHandlerMiddleware(suite.logger))
-	route.GET("/test", func(c *gin.Context) {
-		c.Error(NewAuthError("invalid token", errors.New("jwt expired")))
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrValidate, errors.New("test error subject"))
 	})
-
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	route.ServeHTTP(w, req)
 	result := w.Result()
 	defer result.Body.Close()
+	suite.Equal(http.StatusBadRequest, result.StatusCode)
 
+	suite.Equal(1, suite.obLog.Len())
+	firstLog := suite.obLog.All()[0]
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[VALIDATE FAILED]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
+}
+
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrVariable_ShouldStatusCodeGetStatusBadRequest() {
+	gin.SetMode(gin.ReleaseMode)
+	route := gin.New()
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrVariable, errors.New("test error subject"))
+	})
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	route.ServeHTTP(w, req)
+	result := w.Result()
+	defer result.Body.Close()
+	suite.Equal(http.StatusBadRequest, result.StatusCode)
+
+	suite.Equal(1, suite.obLog.Len())
+	firstLog := suite.obLog.All()[0]
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[VARIABLE TYPE FAILED]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
+}
+
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrInvalidArguments_ShouldStatusCodeGetStatusBadRequest() {
+	gin.SetMode(gin.ReleaseMode)
+	route := gin.New()
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrInvalidArguments, errors.New("test error subject"))
+	})
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	route.ServeHTTP(w, req)
+	result := w.Result()
+	defer result.Body.Close()
+	suite.Equal(http.StatusBadRequest, result.StatusCode)
+
+	suite.Equal(1, suite.obLog.Len())
+	firstLog := suite.obLog.All()[0]
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[INVALID ARGUMENTS]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
+}
+
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrAuthenticate_ShouldStatusCodeGetStatusUnauthorized() {
+	gin.SetMode(gin.ReleaseMode)
+	route := gin.New()
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrAuthenticate, errors.New("test error subject"))
+	})
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	route.ServeHTTP(w, req)
+	result := w.Result()
+	defer result.Body.Close()
 	suite.Equal(http.StatusUnauthorized, result.StatusCode)
-	suite.Equal(1, suite.obLog.Len())
 
+	suite.Equal(1, suite.obLog.Len())
 	firstLog := suite.obLog.All()[0]
-	suite.Equal("request failed", firstLog.Message)
-	suite.Equal("AUTH_ERROR", firstLog.ContextMap()["code"])
-	suite.Equal("invalid token", firstLog.ContextMap()["message"])
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[AUTHENTICATE FAILED]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
 }
 
-// Test ErrorHandlerMiddleware with ApiError - Validation Error
-func (suite *ErrorHandlerMiddlewareSuite) TestErrorHandlerMiddleware_ApiError_Validation() {
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrPermissionDeny_ShouldStatusCodeGetStatusForbidden() {
 	gin.SetMode(gin.ReleaseMode)
 	route := gin.New()
-	route.Use(ErrorHandlerMiddleware(suite.logger))
-	route.POST("/test", func(c *gin.Context) {
-		c.Error(NewValidationError("invalid email", errors.New("must be valid email format")))
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrPermissionDeny, errors.New("test error subject"))
 	})
-
-	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	route.ServeHTTP(w, req)
 	result := w.Result()
 	defer result.Body.Close()
-
-	suite.Equal(http.StatusBadRequest, result.StatusCode)
-	suite.Equal(1, suite.obLog.Len())
-
-	firstLog := suite.obLog.All()[0]
-	suite.Equal("request failed", firstLog.Message)
-	suite.Equal("VALIDATION_ERROR", firstLog.ContextMap()["code"])
-}
-
-// Test ErrorHandlerMiddleware with ApiError - Permission Error
-func (suite *ErrorHandlerMiddlewareSuite) TestErrorHandlerMiddleware_ApiError_Permission() {
-	gin.SetMode(gin.ReleaseMode)
-	route := gin.New()
-	route.Use(ErrorHandlerMiddleware(suite.logger))
-	route.GET("/test", func(c *gin.Context) {
-		c.Error(NewPermissionError("access denied", nil))
-	})
-
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
-	w := httptest.NewRecorder()
-	route.ServeHTTP(w, req)
-	result := w.Result()
-	defer result.Body.Close()
-
 	suite.Equal(http.StatusForbidden, result.StatusCode)
-	suite.Equal(1, suite.obLog.Len())
 
+	suite.Equal(1, suite.obLog.Len())
 	firstLog := suite.obLog.All()[0]
-	suite.Equal("request failed", firstLog.Message)
-	suite.Equal("PERMISSION_DENIED", firstLog.ContextMap()["code"])
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[PERMISSION DENY]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
 }
 
-// Test ErrorHandlerMiddleware with ApiError - Not Found Error
-func (suite *ErrorHandlerMiddlewareSuite) TestErrorHandlerMiddleware_ApiError_NotFound() {
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrJWTExecute_ShouldStatusCodeGetStatusForbidden() {
 	gin.SetMode(gin.ReleaseMode)
 	route := gin.New()
-	route.Use(ErrorHandlerMiddleware(suite.logger))
-	route.GET("/test", func(c *gin.Context) {
-		c.Error(NewNotFoundError("user not found", nil))
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrJWTExecute, errors.New("test error subject"))
 	})
-
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	route.ServeHTTP(w, req)
 	result := w.Result()
 	defer result.Body.Close()
+	suite.Equal(http.StatusForbidden, result.StatusCode)
 
+	suite.Equal(1, suite.obLog.Len())
+	firstLog := suite.obLog.All()[0]
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[JWT EXECUTE FAILED]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
+}
+
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrDatabaseRowNotFound_ShouldStatusCodeGetStatusNotFound() {
+	gin.SetMode(gin.ReleaseMode)
+	route := gin.New()
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrDatabaseRowNotFound, errors.New("test error subject"))
+	})
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	route.ServeHTTP(w, req)
+	result := w.Result()
+	defer result.Body.Close()
 	suite.Equal(http.StatusNotFound, result.StatusCode)
-	suite.Equal(1, suite.obLog.Len())
 
+	suite.Equal(1, suite.obLog.Len())
 	firstLog := suite.obLog.All()[0]
-	suite.Equal("request failed", firstLog.Message)
-	suite.Equal("NOT_FOUND", firstLog.ContextMap()["code"])
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[DATABASE ROW NOT FOUND]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
 }
 
-// Test ErrorHandlerMiddleware with ApiError - Database Error
-func (suite *ErrorHandlerMiddlewareSuite) TestErrorHandlerMiddleware_ApiError_Database() {
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrExecute_ShouldStatusCodeGetStatusUnprocessableEntity() {
 	gin.SetMode(gin.ReleaseMode)
 	route := gin.New()
-	route.Use(ErrorHandlerMiddleware(suite.logger))
-	route.POST("/test", func(c *gin.Context) {
-		c.Error(NewDatabaseError("unique constraint violation", errors.New("duplicate key")))
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrExecute, errors.New("test error subject"))
 	})
-
-	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	route.ServeHTTP(w, req)
 	result := w.Result()
 	defer result.Body.Close()
-
 	suite.Equal(http.StatusUnprocessableEntity, result.StatusCode)
-	suite.Equal(1, suite.obLog.Len())
 
+	suite.Equal(1, suite.obLog.Len())
 	firstLog := suite.obLog.All()[0]
-	suite.Equal("request failed", firstLog.Message)
-	suite.Equal("DATABASE_ERROR", firstLog.ContextMap()["code"])
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[EXECUTE FAILED]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
 }
 
-// Test ErrorHandlerMiddleware with ApiError - Internal Error
-func (suite *ErrorHandlerMiddlewareSuite) TestErrorHandlerMiddleware_ApiError_Internal() {
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrJSONMarshal_ShouldStatusCodeGetStatusInternalServerError() {
 	gin.SetMode(gin.ReleaseMode)
 	route := gin.New()
-	route.Use(ErrorHandlerMiddleware(suite.logger))
-	route.GET("/test", func(c *gin.Context) {
-		c.Error(NewInternalError("unexpected error", errors.New("nil pointer")))
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrJSONMarshal, errors.New("test error subject"))
 	})
-
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	route.ServeHTTP(w, req)
 	result := w.Result()
 	defer result.Body.Close()
-
 	suite.Equal(http.StatusInternalServerError, result.StatusCode)
-	suite.Equal(1, suite.obLog.Len())
 
+	suite.Equal(1, suite.obLog.Len())
 	firstLog := suite.obLog.All()[0]
-	suite.Equal("request failed", firstLog.Message)
-	suite.Equal("INTERNAL_ERROR", firstLog.ContextMap()["code"])
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[JSON MARSHAL FAILED]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
 }
 
-// Test ErrorHandlerMiddleware with unknown error (not ApiError)
-func (suite *ErrorHandlerMiddlewareSuite) TestErrorHandlerMiddleware_UnknownError() {
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrJSONUnmarshal_ShouldStatusCodeGetStatusInternalServerError() {
 	gin.SetMode(gin.ReleaseMode)
 	route := gin.New()
-	route.Use(ErrorHandlerMiddleware(suite.logger))
-	route.GET("/test", func(c *gin.Context) {
-		c.Error(errors.New("some random error"))
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrJSONUnmarshal, errors.New("test error subject"))
 	})
-
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	route.ServeHTTP(w, req)
 	result := w.Result()
 	defer result.Body.Close()
-
 	suite.Equal(http.StatusInternalServerError, result.StatusCode)
-	suite.Equal(1, suite.obLog.Len())
 
+	suite.Equal(1, suite.obLog.Len())
 	firstLog := suite.obLog.All()[0]
-	suite.Equal("unexpected error", firstLog.Message)
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[JSON UNMARSHAL FAILED]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
 }
 
-// Test ErrorHandlerMiddleware with no errors
-func (suite *ErrorHandlerMiddlewareSuite) TestErrorHandlerMiddleware_NoError() {
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrDatabaseConnection_ShouldStatusCodeGetStatusServiceUnavailable() {
 	gin.SetMode(gin.ReleaseMode)
 	route := gin.New()
-	route.Use(ErrorHandlerMiddleware(suite.logger))
-	route.GET("/test", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrDatabaseConnection, errors.New("test error subject"))
 	})
-
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	route.ServeHTTP(w, req)
 	result := w.Result()
 	defer result.Body.Close()
+	suite.Equal(http.StatusServiceUnavailable, result.StatusCode)
 
-	suite.Equal(http.StatusOK, result.StatusCode)
-	suite.Equal(0, suite.obLog.Len())
+	suite.Equal(1, suite.obLog.Len())
+	firstLog := suite.obLog.All()[0]
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[DATABASE CONNECTION FAILED]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
 }
 
-// Test ErrorHandlerMiddleware logs request path and method
-func (suite *ErrorHandlerMiddlewareSuite) TestErrorHandlerMiddleware_LogsPathAndMethod() {
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassErrDatabaseDisconnect_ShouldStatusCodeGetStatusServiceUnavailable() {
 	gin.SetMode(gin.ReleaseMode)
 	route := gin.New()
-	route.Use(ErrorHandlerMiddleware(suite.logger))
-	route.POST("/api/users", func(c *gin.Context) {
-		c.Error(NewAuthError("auth failed", nil))
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrDatabaseDisconnect, errors.New("test error subject"))
 	})
-
-	req := httptest.NewRequest(http.MethodPost, "/api/users", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	route.ServeHTTP(w, req)
 	result := w.Result()
 	defer result.Body.Close()
+	suite.Equal(http.StatusServiceUnavailable, result.StatusCode)
 
 	suite.Equal(1, suite.obLog.Len())
 	firstLog := suite.obLog.All()[0]
-	suite.Equal("/api/users", firstLog.ContextMap()["path"])
-	suite.Equal("POST", firstLog.ContextMap()["method"])
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[DATABASE DISCONNECT FAILED]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
 }
 
-// Test ErrorHandlerMiddleware with multiple errors (uses last one)
-func (suite *ErrorHandlerMiddlewareSuite) TestErrorHandlerMiddleware_MultipleErrors_UsesLast() {
+func (suite *HandlerSuite) TestGinPanicErrorHandler_PassStringError_ShouldStatusCodeGetStatusServiceUnavailable() {
 	gin.SetMode(gin.ReleaseMode)
 	route := gin.New()
-	route.Use(ErrorHandlerMiddleware(suite.logger))
-	route.GET("/test", func(c *gin.Context) {
-		c.Error(NewAuthError("first error", nil))
-		c.Error(NewValidationError("second error", nil))
+	route.Use(gin.Logger(), GinPanicErrorHandler(suite.logger, "error Gin mock"))
+	route.GET("/", func(c *gin.Context) {
+		PanicIfErr(errors.New("got error"), ErrDatabaseDisconnect, errors.New("test error subject"))
 	})
-
-	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
 	route.ServeHTTP(w, req)
 	result := w.Result()
 	defer result.Body.Close()
+	suite.Equal(http.StatusServiceUnavailable, result.StatusCode)
 
-	// Should use the last error (ValidationError -> 400)
-	suite.Equal(http.StatusBadRequest, result.StatusCode)
 	suite.Equal(1, suite.obLog.Len())
-
 	firstLog := suite.obLog.All()[0]
-	suite.Equal("VALIDATION_ERROR", firstLog.ContextMap()["code"])
-	suite.Equal("second error", firstLog.ContextMap()["message"])
+	suite.Equal("error Gin mock", firstLog.Message)
+	suite.Equal("[DATABASE DISCONNECT FAILED]: test error subject: got error", firstLog.Context[0].Interface.(error).Error())
 }
 
-func TestErrorHandlerMiddlewareSuite(t *testing.T) {
-	suite.Run(t, new(ErrorHandlerMiddlewareSuite))
+func TestHandlerSuite(t *testing.T) {
+	suite.Run(t, new(HandlerSuite))
 }
