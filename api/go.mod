@@ -4,13 +4,16 @@ go 1.25.3
 
 require (
 	github.com/gin-contrib/cors v1.7.6
+	github.com/gin-contrib/pprof v1.5.3
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.6.0
+	github.com/google/wire v0.7.0
 	github.com/prashantv/gostub v1.1.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
+	golang.org/x/net v0.43.0
 )
 
 require (
@@ -55,7 +58,6 @@ require (
 	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/mod v0.26.0 // indirect
-	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
