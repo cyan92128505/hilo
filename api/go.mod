@@ -1,4 +1,4 @@
-module holi-api
+module hilo-api
 
 go 1.25.3
 

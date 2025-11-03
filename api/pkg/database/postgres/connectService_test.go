@@ -3,7 +3,7 @@ package postgres
 import (
 	"testing"
 
-	"holi-api/pkg/config"
+	"hilo-api/pkg/config"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
