@@ -1,0 +1,17 @@
+# env file
+.env*
+
+# Editor/IDE
+.idea/*
+.idea
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Chore files
+*.log
+tmp/*
+!tmp/.gitkeep
+*.diff
