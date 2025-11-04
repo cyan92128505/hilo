@@ -2,8 +2,8 @@ package restful
 
 import (
 	"errors"
-	"hilo-api/internal/domains/claim"
-	"hilo-api/internal/domains/definition"
+	"hilo-api/internal/domain/claim"
+	"hilo-api/internal/domain/definition"
 	authDefinition "hilo-api/pkg/definition"
 	"hilo-api/pkg/errorCatcher"
 	jwtTool "hilo-api/pkg/jwt"

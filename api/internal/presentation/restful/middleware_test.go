@@ -1,7 +1,7 @@
 package restful
 
 import (
-	"hilo-api/internal/domains/claim"
+	"hilo-api/internal/domain/claim"
 	"hilo-api/pkg/config"
 	"hilo-api/pkg/jwt"
 	"net/http"
