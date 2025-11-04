@@ -1,0 +1,48 @@
+services:
+  restful:
+    build:
+      context: .
+      dockerfile: ./cmd/restful/Dockerfile
+      args:
+        CMD_FOLDER: restful
+    container_name: hilo-restful
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: postgresql
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./es256_private.pem:/app/pkg/jwt/es256_private.pem:ro
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  postgresql:
+    image: postgres:15.4-bookworm
+    container_name: postgresql
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - data-postgresql:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  postgres:
+    image: migrate/migrate:v4.16.2
+    volumes:
+      - ${PWD}/deployments/migrations/postgresql:/migrations
+
+volumes:
+  data-postgresql:
+    driver: local
