@@ -1,0 +1,3 @@
+-- DO NOT DROP EXTENSION
+-- Extensions should persist unless recreating entire database
+-- If you need to drop it: DROP EXTENSION IF EXISTS "uuid-ossp";
