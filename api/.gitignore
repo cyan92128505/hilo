@@ -27,6 +27,7 @@ go.work.sum
 # env file
 .env
 *-database.json
+*.pem
 
 # Editor/IDE
 .idea/*
