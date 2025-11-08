@@ -23,6 +23,13 @@ type Message struct {
 	readAt     *time.Time
 }
 
+// ConversationPreview represents the latest message in a conversation
+type ConversationPreview struct {
+	OtherUser   *User
+	LastMessage *Message
+	UnreadCount int
+}
+
 // NewMessage creates a new message with business rules enforced
 func NewMessage(senderID, receiverID uuid.UUID, content string) (*Message, error) {
 	if senderID == receiverID {

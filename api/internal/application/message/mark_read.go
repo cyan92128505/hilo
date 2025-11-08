@@ -2,18 +2,18 @@ package message
 
 import (
 	"context"
-	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/repository"
 
 	"github.com/google/uuid"
 )
 
 // MarkAsReadUseCase handles marking messages as read
 type MarkAsReadUseCase struct {
-	messageRepo domain.MessageRepository
+	messageRepo repository.MessageRepository
 }
 
 // NewMarkAsReadUseCase creates a new mark as read use case
-func NewMarkAsReadUseCase(messageRepo domain.MessageRepository) *MarkAsReadUseCase {
+func NewMarkAsReadUseCase(messageRepo repository.MessageRepository) *MarkAsReadUseCase {
 	return &MarkAsReadUseCase{
 		messageRepo: messageRepo,
 	}

@@ -3,15 +3,16 @@ package user
 import (
 	"context"
 	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/repository"
 )
 
 // ListUsersUseCase handles listing all users
 type ListUsersUseCase struct {
-	userRepo domain.UserRepository
+	userRepo repository.UserRepository
 }
 
 // NewListUsersUseCase creates a new list users use case
-func NewListUsersUseCase(userRepo domain.UserRepository) *ListUsersUseCase {
+func NewListUsersUseCase(userRepo repository.UserRepository) *ListUsersUseCase {
 	return &ListUsersUseCase{
 		userRepo: userRepo,
 	}

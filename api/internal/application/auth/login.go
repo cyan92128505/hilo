@@ -3,15 +3,16 @@ package auth
 import (
 	"context"
 	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/repository"
 )
 
 // LoginUseCase handles user authentication
 type LoginUseCase struct {
-	userRepo domain.UserRepository
+	userRepo repository.UserRepository
 }
 
 // NewLoginUseCase creates a new login use case
-func NewLoginUseCase(userRepo domain.UserRepository) *LoginUseCase {
+func NewLoginUseCase(userRepo repository.UserRepository) *LoginUseCase {
 	return &LoginUseCase{
 		userRepo: userRepo,
 	}

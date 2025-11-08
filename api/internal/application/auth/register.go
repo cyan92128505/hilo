@@ -3,15 +3,16 @@ package auth
 import (
 	"context"
 	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/repository"
 )
 
 // RegisterUseCase handles user registration
 type RegisterUseCase struct {
-	userRepo domain.UserRepository
+	userRepo repository.UserRepository
 }
 
 // NewRegisterUseCase creates a new register use case
-func NewRegisterUseCase(userRepo domain.UserRepository) *RegisterUseCase {
+func NewRegisterUseCase(userRepo repository.UserRepository) *RegisterUseCase {
 	return &RegisterUseCase{
 		userRepo: userRepo,
 	}

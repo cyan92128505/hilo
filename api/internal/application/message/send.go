@@ -3,18 +3,19 @@ package message
 import (
 	"context"
 	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/repository"
 
 	"github.com/google/uuid"
 )
 
 // SendMessageUseCase handles sending messages
 type SendMessageUseCase struct {
-	messageRepo domain.MessageRepository
-	userRepo    domain.UserRepository
+	messageRepo repository.MessageRepository
+	userRepo    repository.UserRepository
 }
 
 // NewSendMessageUseCase creates a new send message use case
-func NewSendMessageUseCase(messageRepo domain.MessageRepository, userRepo domain.UserRepository) *SendMessageUseCase {
+func NewSendMessageUseCase(messageRepo repository.MessageRepository, userRepo repository.UserRepository) *SendMessageUseCase {
 	return &SendMessageUseCase{
 		messageRepo: messageRepo,
 		userRepo:    userRepo,

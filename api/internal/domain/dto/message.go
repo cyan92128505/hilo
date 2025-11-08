@@ -51,7 +51,7 @@ type ListMessagesResponse struct {
 
 // ConversationPreviewResponse represents a conversation preview
 type ConversationPreviewResponse struct {
-	OtherUser   *UserResponse   `json:"other_user"`
+	OtherUser   *UserResponse    `json:"other_user"`
 	LastMessage *MessageResponse `json:"last_message"`
 	UnreadCount int              `json:"unread_count"`
 }

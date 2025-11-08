@@ -3,17 +3,18 @@ package message
 import (
 	"context"
 	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/repository"
 
 	"github.com/google/uuid"
 )
 
 // ListConversationUseCase handles listing messages in a conversation
 type ListConversationUseCase struct {
-	messageRepo domain.MessageRepository
+	messageRepo repository.MessageRepository
 }
 
 // NewListConversationUseCase creates a new list conversation use case
-func NewListConversationUseCase(messageRepo domain.MessageRepository) *ListConversationUseCase {
+func NewListConversationUseCase(messageRepo repository.MessageRepository) *ListConversationUseCase {
 	return &ListConversationUseCase{
 		messageRepo: messageRepo,
 	}
