@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/do"
 	"time"
 )
 
@@ -14,7 +14,7 @@ type UserResponse struct {
 }
 
 // FromDomain converts domain user to DTO
-func (u *UserResponse) FromDomain(user *domain.User) {
+func (u *UserResponse) FromDomain(user *do.User) {
 	u.ID = user.ID().String()
 	u.Email = user.Email()
 	u.Username = user.Username()

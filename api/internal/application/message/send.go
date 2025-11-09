@@ -2,7 +2,8 @@ package message
 
 import (
 	"context"
-	"hilo-api/internal/domain"
+	usecase "hilo-api/internal/application"
+	"hilo-api/internal/domain/do"
 	"hilo-api/internal/domain/repository"
 
 	"github.com/google/uuid"
@@ -23,15 +24,15 @@ func NewSendMessageUseCase(messageRepo repository.MessageRepository, userRepo re
 }
 
 // Execute sends a message from sender to receiver
-func (uc *SendMessageUseCase) Execute(ctx context.Context, senderID, receiverID uuid.UUID, content string) (*domain.Message, error) {
+func (uc *SendMessageUseCase) Execute(ctx context.Context, senderID, receiverID uuid.UUID, content string) (*do.Message, error) {
 	// Verify receiver exists
 	_, err := uc.userRepo.FindByID(ctx, receiverID)
 	if err != nil {
-		return nil, ErrReceiverNotFound
+		return nil, usecase.ErrReceiverNotFound
 	}
 
 	// Create message with business rules
-	msg, err := domain.NewMessage(senderID, receiverID, content)
+	msg, err := do.NewMessage(senderID, receiverID, content)
 	if err != nil {
 		return nil, err
 	}

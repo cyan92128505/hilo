@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/do"
 	"time"
 )
 
@@ -27,7 +27,7 @@ type MessageResponse struct {
 }
 
 // FromDomain converts domain message to DTO
-func (m *MessageResponse) FromDomain(msg *domain.Message) {
+func (m *MessageResponse) FromDomain(msg *do.Message) {
 	m.ID = msg.ID().String()
 	m.SenderID = msg.SenderID().String()
 	m.ReceiverID = msg.ReceiverID().String()
@@ -57,7 +57,7 @@ type ConversationPreviewResponse struct {
 }
 
 // FromDomain converts domain conversation preview to DTO
-func (c *ConversationPreviewResponse) FromDomain(preview *domain.ConversationPreview) {
+func (c *ConversationPreviewResponse) FromDomain(preview *do.ConversationPreview) {
 	c.OtherUser = &UserResponse{}
 	c.OtherUser.FromDomain(preview.OtherUser)
 

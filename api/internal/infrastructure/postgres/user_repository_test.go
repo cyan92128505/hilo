@@ -3,7 +3,7 @@ package postgres_test
 import (
 	"context"
 	"fmt"
-	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/do"
 	"hilo-api/internal/infrastructure/postgres"
 	"testing"
 
@@ -24,7 +24,7 @@ func TestUserRepository_Create(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("create user successfully", func(t *testing.T) {
-		user, err := domain.NewUser("test@example.com", "password123", "testuser")
+		user, err := do.NewUser("test@example.com", "password123", "testuser")
 		require.NoError(t, err)
 
 		err = repo.Create(ctx, user)
@@ -39,8 +39,8 @@ func TestUserRepository_Create(t *testing.T) {
 	})
 
 	t.Run("cannot create duplicate email", func(t *testing.T) {
-		user1, _ := domain.NewUser("duplicate@example.com", "password123", "user1")
-		user2, _ := domain.NewUser("duplicate@example.com", "password456", "user2")
+		user1, _ := do.NewUser("duplicate@example.com", "password123", "user1")
+		user2, _ := do.NewUser("duplicate@example.com", "password456", "user2")
 
 		err1 := repo.Create(ctx, user1)
 		require.NoError(t, err1)
@@ -62,7 +62,7 @@ func TestUserRepository_FindByID(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("find existing user", func(t *testing.T) {
-		user, _ := domain.NewUser("find@example.com", "password123", "finduser")
+		user, _ := do.NewUser("find@example.com", "password123", "finduser")
 		require.NoError(t, repo.Create(ctx, user))
 
 		found, err := repo.FindByID(ctx, user.ID())
@@ -95,7 +95,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("find by email", func(t *testing.T) {
-		user, _ := domain.NewUser("email@example.com", "password123", "emailuser")
+		user, _ := do.NewUser("email@example.com", "password123", "emailuser")
 		require.NoError(t, repo.Create(ctx, user))
 
 		found, err := repo.FindByEmail(ctx, "email@example.com")
@@ -125,9 +125,9 @@ func TestUserRepository_FindAll(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test users
-	users := []*domain.User{}
+	users := []*do.User{}
 	for i := 0; i < 5; i++ {
-		user, _ := domain.NewUser(
+		user, _ := do.NewUser(
 			fmt.Sprintf("user%d@example.com", i),
 			"password123",
 			fmt.Sprintf("user%d", i),
@@ -181,7 +181,7 @@ func TestUserRepository_Search(t *testing.T) {
 	}
 
 	for _, tu := range testUsers {
-		user, _ := domain.NewUser(tu.email, "password123", tu.username)
+		user, _ := do.NewUser(tu.email, "password123", tu.username)
 		require.NoError(t, repo.Create(ctx, user))
 	}
 

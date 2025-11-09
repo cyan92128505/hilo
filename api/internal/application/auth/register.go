@@ -2,7 +2,8 @@ package auth
 
 import (
 	"context"
-	"hilo-api/internal/domain"
+	usecase "hilo-api/internal/application"
+	"hilo-api/internal/domain/do"
 	"hilo-api/internal/domain/repository"
 )
 
@@ -19,15 +20,15 @@ func NewRegisterUseCase(userRepo repository.UserRepository) *RegisterUseCase {
 }
 
 // Execute registers a new user
-func (uc *RegisterUseCase) Execute(ctx context.Context, email, password, username string) (*domain.User, error) {
+func (uc *RegisterUseCase) Execute(ctx context.Context, email, password, username string) (*do.User, error) {
 	// Check if user already exists
 	existing, err := uc.userRepo.FindByEmail(ctx, email)
 	if err == nil && existing != nil {
-		return nil, ErrEmailAlreadyExists
+		return nil, usecase.ErrEmailAlreadyExists
 	}
 
 	// Create user with business rules
-	user, err := domain.NewUser(email, password, username)
+	user, err := do.NewUser(email, password, username)
 	if err != nil {
 		return nil, err
 	}

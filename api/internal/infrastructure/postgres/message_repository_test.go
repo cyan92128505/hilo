@@ -2,7 +2,7 @@ package postgres_test
 
 import (
 	"context"
-	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/do"
 	"hilo-api/internal/infrastructure/postgres"
 	"testing"
 	"time"
@@ -25,13 +25,13 @@ func TestMessageRepository_Create(t *testing.T) {
 
 	t.Run("create message successfully", func(t *testing.T) {
 		// Create users first
-		sender, _ := domain.NewUser("sender@example.com", "password123", "sender")
-		receiver, _ := domain.NewUser("receiver@example.com", "password123", "receiver")
+		sender, _ := do.NewUser("sender@example.com", "password123", "sender")
+		receiver, _ := do.NewUser("receiver@example.com", "password123", "receiver")
 		require.NoError(t, userRepo.Create(ctx, sender))
 		require.NoError(t, userRepo.Create(ctx, receiver))
 
 		// Create message
-		msg, err := domain.NewMessage(sender.ID(), receiver.ID(), "Hello World")
+		msg, err := do.NewMessage(sender.ID(), receiver.ID(), "Hello World")
 		require.NoError(t, err)
 
 		err = messageRepo.Create(ctx, msg)
@@ -60,13 +60,13 @@ func TestMessageRepository_FindByID(t *testing.T) {
 
 	t.Run("find existing message", func(t *testing.T) {
 		// Create users
-		sender, _ := domain.NewUser("sender@example.com", "password123", "sender")
-		receiver, _ := domain.NewUser("receiver@example.com", "password123", "receiver")
+		sender, _ := do.NewUser("sender@example.com", "password123", "sender")
+		receiver, _ := do.NewUser("receiver@example.com", "password123", "receiver")
 		require.NoError(t, userRepo.Create(ctx, sender))
 		require.NoError(t, userRepo.Create(ctx, receiver))
 
 		// Create message
-		msg, _ := domain.NewMessage(sender.ID(), receiver.ID(), "Test message")
+		msg, _ := do.NewMessage(sender.ID(), receiver.ID(), "Test message")
 		require.NoError(t, messageRepo.Create(ctx, msg))
 
 		found, err := messageRepo.FindByID(ctx, msg.ID())
@@ -77,12 +77,12 @@ func TestMessageRepository_FindByID(t *testing.T) {
 	})
 
 	t.Run("message not found", func(t *testing.T) {
-		sender, _ := domain.NewUser("s@example.com", "password123", "s")
-		receiver, _ := domain.NewUser("r@example.com", "password123", "r")
+		sender, _ := do.NewUser("s@example.com", "password123", "s")
+		receiver, _ := do.NewUser("r@example.com", "password123", "r")
 		require.NoError(t, userRepo.Create(ctx, sender))
 		require.NoError(t, userRepo.Create(ctx, receiver))
 
-		nonExistentMsg, _ := domain.NewMessage(sender.ID(), receiver.ID(), "test")
+		nonExistentMsg, _ := do.NewMessage(sender.ID(), receiver.ID(), "test")
 		found, err := messageRepo.FindByID(ctx, nonExistentMsg.ID())
 
 		assert.Error(t, err)
@@ -105,13 +105,13 @@ func TestMessageRepository_UpdateReadAt(t *testing.T) {
 
 	t.Run("update read_at timestamp", func(t *testing.T) {
 		// Create users
-		sender, _ := domain.NewUser("sender@example.com", "password123", "sender")
-		receiver, _ := domain.NewUser("receiver@example.com", "password123", "receiver")
+		sender, _ := do.NewUser("sender@example.com", "password123", "sender")
+		receiver, _ := do.NewUser("receiver@example.com", "password123", "receiver")
 		require.NoError(t, userRepo.Create(ctx, sender))
 		require.NoError(t, userRepo.Create(ctx, receiver))
 
 		// Create unread message
-		msg, _ := domain.NewMessage(sender.ID(), receiver.ID(), "Unread message")
+		msg, _ := do.NewMessage(sender.ID(), receiver.ID(), "Unread message")
 		require.NoError(t, messageRepo.Create(ctx, msg))
 
 		// Mark as read
@@ -141,17 +141,17 @@ func TestMessageRepository_ListConversation(t *testing.T) {
 	ctx := context.Background()
 
 	// Create users
-	userA, _ := domain.NewUser("usera@example.com", "password123", "userA")
-	userB, _ := domain.NewUser("userb@example.com", "password123", "userB")
-	userC, _ := domain.NewUser("userc@example.com", "password123", "userC")
+	userA, _ := do.NewUser("usera@example.com", "password123", "userA")
+	userB, _ := do.NewUser("userb@example.com", "password123", "userB")
+	userC, _ := do.NewUser("userc@example.com", "password123", "userC")
 	require.NoError(t, userRepo.Create(ctx, userA))
 	require.NoError(t, userRepo.Create(ctx, userB))
 	require.NoError(t, userRepo.Create(ctx, userC))
 
 	// Create conversation between A and B
 	messages := []struct {
-		sender   domain.User
-		receiver domain.User
+		sender   do.User
+		receiver do.User
 		content  string
 	}{
 		{*userA, *userB, "A to B message 1"},
@@ -162,7 +162,7 @@ func TestMessageRepository_ListConversation(t *testing.T) {
 	}
 
 	for _, m := range messages {
-		msg, _ := domain.NewMessage(m.sender.ID(), m.receiver.ID(), m.content)
+		msg, _ := do.NewMessage(m.sender.ID(), m.receiver.ID(), m.content)
 		require.NoError(t, messageRepo.Create(ctx, msg))
 	}
 
@@ -200,8 +200,8 @@ func TestMessageRepository_ListConversation(t *testing.T) {
 	})
 
 	t.Run("no messages between users returns empty", func(t *testing.T) {
-		newUserA, _ := domain.NewUser("new1@example.com", "password123", "new1")
-		newUserB, _ := domain.NewUser("new2@example.com", "password123", "new2")
+		newUserA, _ := do.NewUser("new1@example.com", "password123", "new1")
+		newUserB, _ := do.NewUser("new2@example.com", "password123", "new2")
 		require.NoError(t, userRepo.Create(ctx, newUserA))
 		require.NoError(t, userRepo.Create(ctx, newUserB))
 
@@ -225,9 +225,9 @@ func TestMessageRepository_ListUserConversations(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test users
-	userA, _ := domain.NewUser("usera@example.com", "password123", "userA")
-	userB, _ := domain.NewUser("userb@example.com", "password123", "userB")
-	userC, _ := domain.NewUser("userc@example.com", "password123", "userC")
+	userA, _ := do.NewUser("usera@example.com", "password123", "userA")
+	userB, _ := do.NewUser("userb@example.com", "password123", "userB")
+	userC, _ := do.NewUser("userc@example.com", "password123", "userC")
 
 	require.NoError(t, userRepo.Create(ctx, userA))
 	require.NoError(t, userRepo.Create(ctx, userB))
@@ -235,15 +235,15 @@ func TestMessageRepository_ListUserConversations(t *testing.T) {
 
 	// Create conversations
 	// A <-> B (2 messages, 1 unread from B)
-	msgAB1, _ := domain.NewMessage(userA.ID(), userB.ID(), "A to B 1")
-	msgBA1, _ := domain.NewMessage(userB.ID(), userA.ID(), "B to A 1 (unread)")
+	msgAB1, _ := do.NewMessage(userA.ID(), userB.ID(), "A to B 1")
+	msgBA1, _ := do.NewMessage(userB.ID(), userA.ID(), "B to A 1 (unread)")
 	require.NoError(t, messageRepo.Create(ctx, msgAB1))
 	time.Sleep(100 * time.Millisecond) // Ensure different timestamps
 	require.NoError(t, messageRepo.Create(ctx, msgBA1))
 
 	// A <-> C (1 message, read)
 	time.Sleep(100 * time.Millisecond)
-	msgCA1, _ := domain.NewMessage(userC.ID(), userA.ID(), "C to A 1")
+	msgCA1, _ := do.NewMessage(userC.ID(), userA.ID(), "C to A 1")
 	require.NoError(t, messageRepo.Create(ctx, msgCA1))
 	require.NoError(t, messageRepo.UpdateReadAt(ctx, msgCA1.ID(), time.Now()))
 
@@ -273,7 +273,7 @@ func TestMessageRepository_ListUserConversations(t *testing.T) {
 	})
 
 	t.Run("user with no conversations returns empty", func(t *testing.T) {
-		newUser, _ := domain.NewUser("new@example.com", "password123", "newuser")
+		newUser, _ := do.NewUser("new@example.com", "password123", "newuser")
 		require.NoError(t, userRepo.Create(ctx, newUser))
 
 		previews, err := messageRepo.ListUserConversations(ctx, newUser.ID(), 10, 0)

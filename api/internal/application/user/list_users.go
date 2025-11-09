@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/do"
 	"hilo-api/internal/domain/repository"
 )
 
@@ -19,6 +19,6 @@ func NewListUsersUseCase(userRepo repository.UserRepository) *ListUsersUseCase {
 }
 
 // Execute retrieves all users with pagination
-func (uc *ListUsersUseCase) Execute(ctx context.Context, limit, offset int) ([]*domain.User, error) {
+func (uc *ListUsersUseCase) Execute(ctx context.Context, limit, offset int) ([]*do.User, error) {
 	return uc.userRepo.FindAll(ctx, limit, offset)
 }

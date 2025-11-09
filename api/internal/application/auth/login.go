@@ -2,7 +2,8 @@ package auth
 
 import (
 	"context"
-	"hilo-api/internal/domain"
+	usecase "hilo-api/internal/application"
+	"hilo-api/internal/domain/do"
 	"hilo-api/internal/domain/repository"
 )
 
@@ -19,16 +20,16 @@ func NewLoginUseCase(userRepo repository.UserRepository) *LoginUseCase {
 }
 
 // Execute authenticates a user
-func (uc *LoginUseCase) Execute(ctx context.Context, email, password string) (*domain.User, error) {
+func (uc *LoginUseCase) Execute(ctx context.Context, email, password string) (*do.User, error) {
 	// Find user
 	user, err := uc.userRepo.FindByEmail(ctx, email)
 	if err != nil {
-		return nil, ErrInvalidCredentials
+		return nil, usecase.ErrInvalidCredentials
 	}
 
 	// Verify password (business rule in domain)
 	if err := user.VerifyPassword(password); err != nil {
-		return nil, ErrInvalidCredentials
+		return nil, usecase.ErrInvalidCredentials
 	}
 
 	return user, nil

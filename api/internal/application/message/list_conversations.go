@@ -2,7 +2,7 @@ package message
 
 import (
 	"context"
-	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/do"
 	"hilo-api/internal/domain/repository"
 
 	"github.com/google/uuid"
@@ -21,6 +21,6 @@ func NewListConversationsUseCase(messageRepo repository.MessageRepository) *List
 }
 
 // Execute retrieves all conversations for a user
-func (uc *ListConversationsUseCase) Execute(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*domain.ConversationPreview, error) {
+func (uc *ListConversationsUseCase) Execute(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*do.ConversationPreview, error) {
 	return uc.messageRepo.ListUserConversations(ctx, userID, limit, offset)
 }

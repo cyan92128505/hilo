@@ -2,7 +2,7 @@ package message
 
 import (
 	"context"
-	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/do"
 	"hilo-api/internal/domain/repository"
 
 	"github.com/google/uuid"
@@ -21,6 +21,6 @@ func NewListConversationUseCase(messageRepo repository.MessageRepository) *ListC
 }
 
 // Execute retrieves messages between two users
-func (uc *ListConversationUseCase) Execute(ctx context.Context, userA, userB uuid.UUID, limit, offset int) ([]*domain.Message, error) {
+func (uc *ListConversationUseCase) Execute(ctx context.Context, userA, userB uuid.UUID, limit, offset int) ([]*do.Message, error) {
 	return uc.messageRepo.ListConversation(ctx, userA, userB, limit, offset)
 }

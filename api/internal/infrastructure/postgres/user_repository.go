@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/do"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -18,7 +18,7 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
+func (r *UserRepository) Create(ctx context.Context, user *do.User) error {
 	query := `
 		INSERT INTO users (id, email, password, username, created_at)
 		VALUES ($1, $2, $3, $4, $5)
@@ -33,7 +33,7 @@ func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
 	return err
 }
 
-func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*do.User, error) {
 	query := `
 		SELECT id, email, password, username, created_at
 		FROM users
@@ -59,10 +59,10 @@ func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Us
 		return nil, err
 	}
 
-	return domain.ReconstructUser(uid, email, password, username, createdAt.Time), nil
+	return do.ReconstructUser(uid, email, password, username, createdAt.Time), nil
 }
 
-func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*do.User, error) {
 	query := `
 		SELECT id, email, password, username, created_at
 		FROM users
@@ -88,10 +88,10 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain
 		return nil, err
 	}
 
-	return domain.ReconstructUser(id, userEmail, password, username, createdAt.Time), nil
+	return do.ReconstructUser(id, userEmail, password, username, createdAt.Time), nil
 }
 
-func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]*domain.User, error) {
+func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]*do.User, error) {
 	query := `
 		SELECT id, email, password, username, created_at
 		FROM users
@@ -105,7 +105,7 @@ func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 	}
 	defer rows.Close()
 
-	var users []*domain.User
+	var users []*do.User
 	for rows.Next() {
 		var (
 			id        uuid.UUID
@@ -119,13 +119,13 @@ func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]*dom
 			return nil, err
 		}
 
-		users = append(users, domain.ReconstructUser(id, email, password, username, createdAt.Time))
+		users = append(users, do.ReconstructUser(id, email, password, username, createdAt.Time))
 	}
 
 	return users, rows.Err()
 }
 
-func (r *UserRepository) Search(ctx context.Context, queryString string, limit int) ([]*domain.User, error) {
+func (r *UserRepository) Search(ctx context.Context, queryString string, limit int) ([]*do.User, error) {
 	query := `
 		SELECT id, email, password, username, created_at
 		FROM users
@@ -139,7 +139,7 @@ func (r *UserRepository) Search(ctx context.Context, queryString string, limit i
 	}
 	defer rows.Close()
 
-	var users []*domain.User
+	var users []*do.User
 	for rows.Next() {
 		var (
 			id        uuid.UUID
@@ -153,7 +153,7 @@ func (r *UserRepository) Search(ctx context.Context, queryString string, limit i
 			return nil, err
 		}
 
-		users = append(users, domain.ReconstructUser(id, email, password, username, createdAt.Time))
+		users = append(users, do.ReconstructUser(id, email, password, username, createdAt.Time))
 	}
 
 	return users, rows.Err()

@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"hilo-api/internal/domain"
+	"hilo-api/internal/domain/do"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,7 +19,7 @@ func NewMessageRepository(db *sqlx.DB) *MessageRepository {
 	return &MessageRepository{db: db}
 }
 
-func (r *MessageRepository) Create(ctx context.Context, msg *domain.Message) error {
+func (r *MessageRepository) Create(ctx context.Context, msg *do.Message) error {
 	query := `
 		INSERT INTO messages (id, sender_id, receiver_id, content, created_at, read_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -35,7 +35,7 @@ func (r *MessageRepository) Create(ctx context.Context, msg *domain.Message) err
 	return err
 }
 
-func (r *MessageRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Message, error) {
+func (r *MessageRepository) FindByID(ctx context.Context, id uuid.UUID) (*do.Message, error) {
 	query := `
 		SELECT id, sender_id, receiver_id, content, created_at, read_at
 		FROM messages
@@ -67,7 +67,7 @@ func (r *MessageRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain
 		readAtPtr = &readAt.Time
 	}
 
-	return domain.ReconstructMessage(msgID, senderID, receiverID, content, createdAt, readAtPtr), nil
+	return do.ReconstructMessage(msgID, senderID, receiverID, content, createdAt, readAtPtr), nil
 }
 
 func (r *MessageRepository) UpdateReadAt(ctx context.Context, id uuid.UUID, readAt time.Time) error {
@@ -80,7 +80,7 @@ func (r *MessageRepository) UpdateReadAt(ctx context.Context, id uuid.UUID, read
 	return err
 }
 
-func (r *MessageRepository) ListConversation(ctx context.Context, userA, userB uuid.UUID, limit, offset int) ([]*domain.Message, error) {
+func (r *MessageRepository) ListConversation(ctx context.Context, userA, userB uuid.UUID, limit, offset int) ([]*do.Message, error) {
 	query := `
 		SELECT id, sender_id, receiver_id, content, created_at, read_at
 		FROM messages
@@ -96,7 +96,7 @@ func (r *MessageRepository) ListConversation(ctx context.Context, userA, userB u
 	}
 	defer rows.Close()
 
-	var messages []*domain.Message
+	var messages []*do.Message
 	for rows.Next() {
 		var (
 			id         uuid.UUID
@@ -116,13 +116,13 @@ func (r *MessageRepository) ListConversation(ctx context.Context, userA, userB u
 			readAtPtr = &readAt.Time
 		}
 
-		messages = append(messages, domain.ReconstructMessage(id, senderID, receiverID, content, createdAt, readAtPtr))
+		messages = append(messages, do.ReconstructMessage(id, senderID, receiverID, content, createdAt, readAtPtr))
 	}
 
 	return messages, rows.Err()
 }
 
-func (r *MessageRepository) ListUserConversations(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*domain.ConversationPreview, error) {
+func (r *MessageRepository) ListUserConversations(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*do.ConversationPreview, error) {
 	// Get latest message from each conversation using ROW_NUMBER
 	query := `
 		WITH conversation_messages AS (
@@ -180,7 +180,7 @@ func (r *MessageRepository) ListUserConversations(ctx context.Context, userID uu
 	}
 	defer rows.Close()
 
-	var previews []*domain.ConversationPreview
+	var previews []*do.ConversationPreview
 	for rows.Next() {
 		var (
 			msgID         uuid.UUID
@@ -210,9 +210,9 @@ func (r *MessageRepository) ListUserConversations(ctx context.Context, userID uu
 			readAtPtr = &readAt.Time
 		}
 
-		previews = append(previews, &domain.ConversationPreview{
-			OtherUser:   domain.ReconstructUser(userID, email, password, username, userCreatedAt),
-			LastMessage: domain.ReconstructMessage(msgID, senderID, receiverID, content, msgCreatedAt, readAtPtr),
+		previews = append(previews, &do.ConversationPreview{
+			OtherUser:   do.ReconstructUser(userID, email, password, username, userCreatedAt),
+			LastMessage: do.ReconstructMessage(msgID, senderID, receiverID, content, msgCreatedAt, readAtPtr),
 			UnreadCount: unreadCount,
 		})
 	}
